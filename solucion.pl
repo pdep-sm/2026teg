@@ -68,7 +68,7 @@ estaEnContinente(Jugador, Continente):-
 ocupa(Pais, Jugador):-
 	ocupa(Pais, Jugador, _ ).
 
-%2
+% 2
 cantidadPaises(Jugador, Cantidad):-
 	jugador(Jugador),
 	findall(Pais, ocupa(Pais, Jugador), Paises),
@@ -77,7 +77,7 @@ cantidadPaises(Jugador, Cantidad):-
 jugador(Jugador):-
 	objetivo(Jugador, _ ).
 
-%3
+% 3
 ocupaContinente(Jugador, Continente):-
 	jugador(Jugador),
 	continente(Continente),
@@ -86,21 +86,84 @@ ocupaContinente(Jugador, Continente):-
 		ocupa(Jugador, Pais)
 	).
 
-%4
+% 4
 leFaltaMucho(Jugador, Continente):-
+	leFaltaMasDe(2, Jugador, Continente).
+
+leFaltaMasDe(Limite, Jugador, Continente):-
 	jugador(Jugador),
 	continente(Continente),
 	findall(Pais, leFaltaPais(Jugador, Continente, Pais), PaisesNoOcupados),
 	length(PaisesNoOcupados, Cantidad),
-	Cantidad > 2.
+	Cantidad > Limite.
 
 leFaltaPais(Jugador, Continente, Pais):-
 	paisContinente(Pais, Continente),
 	not(ocupa(Pais, Jugador)).
 
-%5
+% 5
 sonLimitrofes(Pais1, Pais2):-
 	limitrofes(Paises),
 	member(Pais1, Paises),
 	member(Pais2, Paises),
 	Pais1 \= Pais2.
+
+% 6 
+% ocupa todos los países importantes
+esGroso(Jugador):-
+	jugador(Jugador),
+	forall(
+		paisImportante(Pais),
+		ocupa(Pais, Jugador)
+	).
+% ocupa más de 10 países 
+esGroso(Jugador):-
+	cantidadPaises(Jugador, Cantidad),
+	Cantidad > 10.
+% tiene más de 50 ejércitos
+esGroso(Jugador):-
+	jugador(Jugador),
+	findall(Cantidad, ocupa( _ , Jugador, Cantidad), Cantidades),
+	sum_list(Cantidades, Total),
+	Total > 50.
+	
+% 7
+estaEnElHorno(Pais):-
+	ocupa(Pais, Jugador),
+	jugador(OtroJugador),
+	Jugador \= OtroJugador,
+	forall(
+		sonLimitrofes(Pais, PaisLimitrofe),
+		ocupa(PaisLimitrofe, OtroJugador)
+	).
+
+% 8
+esCaotico(Continente):-
+	continente(Continente),
+	findall(Jugador, estaEnContinente(Jugador, Continente), Jugadores),
+	list_to_set(Jugadores, JugadoresSinRepetir),
+	length(JugadoresSinRepetir, Cantidad),
+	Cantidad > 3.
+
+% 9
+capoCannoniere(Jugador):-
+	cantidadPaises(Jugador, Cantidad),
+	forall(
+		(cantidadPaises(OtroJugador , OtraCantidad), OtroJugador \= Jugador),
+		Cantidad > OtraCantidad
+	).
+
+% 10
+ganadooor(Jugador):-
+	objetivo(Jugador, Objetivo),
+	cumplioObjetivo(Jugador, Objetivo).
+
+cumplioObjetivo(Jugador, ocuparContinente(Continente)):-
+	ocupaContinente(Jugador, Continente).
+cumplioObjetivo(Jugador, ocuparPaises(Paises)):-
+	forall(
+		member(Pais, Paises),
+		ocupa(Pais, Jugador)
+	).
+cumplioObjetivo(Jugador, destruirJugador(Victima)):-
+	not(ocupa( _ , Victima)).
